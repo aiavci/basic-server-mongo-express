@@ -1,7 +1,1 @@
-# Shopping List Server
-
-# API
-
-## List operations
-
-### Get # basic-server-mongo-express
+# basic-server-mongo-express
