@@ -1,4 +1,0 @@
-{
-  "mongoURI": "mongodb://localhost/basicservermongoexpress",
-  "jwtSecret": "sample_secret_unsafe"
-}
