@@ -1,0 +1,31 @@
+{
+  "name": "@aavci/basic-server-mongo-express",
+  "version": "0.0.1",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "server": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/aiavci/basic-server-mongo-express.git"
+  },
+  "author": "Ali I. Avci",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aiavci/basic-server-mongo-express/issues"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "concurrently": "^3.6.0",
+    "config": "^3.0.1",
+    "express": "^4.16.3",
+    "jsonwebtoken": "^8.5.0",
+    "mongoose": "^5.1.6"
+  },
+  "devDependencies": {
+    "nodemon": "^1.17.5"
+  }
+}
