@@ -7,10 +7,16 @@ const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config()
 const config = require('config');
+const logger = require('morgan');
+const cors = require('cors');
 
 var bodyParser = require('body-parser')
 
 const app = express();
+
+app.use(logger('dev'));
+
+app.use(cors())
 
 // Bodyparser Middleware
 app.use(express.json());

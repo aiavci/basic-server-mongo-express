@@ -6,7 +6,8 @@ const config = require('config');
 const jwt = require('jsonwebtoken');
 
 function auth(req, res, next) {
-  const token = req.header('x-auth-token');
+  let token = req.get('authorization')
+  token = token && JSON.parse(token).token;
 
   if (!token) {
     // If token doesn't exist, return error

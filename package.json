@@ -21,10 +21,13 @@
     "bcryptjs": "^2.4.3",
     "concurrently": "^3.6.0",
     "config": "^3.0.1",
+    "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.16.3",
     "jsonwebtoken": "^8.5.0",
-    "mongoose": "^5.1.6"
+    "mongoose": "^5.1.6",
+    "morgan": "^1.9.1",
+    "node-geocoder": "^3.25.0"
   },
   "devDependencies": {
     "nodemon": "^1.17.5"

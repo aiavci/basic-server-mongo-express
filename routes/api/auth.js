@@ -9,14 +9,25 @@ const config = require('config');
 const jwt = require('jsonwebtoken');
 const auth = require('../../middleware/auth');
 
+const NodeGeocoder = require('node-geocoder');
+
+const options = {
+  provider: 'openstreetmap'
+}
+
+const geocoder = NodeGeocoder(options);
+
 // Models
 const User = require('../../models/User');
+const Address = require('../../models/Address');
 
 // @route   POST api/auth
 // @desc    Auth user
 // @access  Public
 router.post('/', async (req, res) => {
   const { email, password } = req.body;
+
+  console.log('Received request', req.body)
 
   // Simple validation
   if(!email || !password) {
@@ -49,6 +60,23 @@ router.post('/', async (req, res) => {
       });
     }
   )
+});
+
+router.get('/me', auth, async (req, res, next) => {
+  console.log('Getting me')
+  let userId = req.user.id;
+
+  console.log('For userId', userId)
+
+  let user = await User.findById(userId).populate({
+    path: 'address'
+  });
+
+  console.log('user', user)
+  
+  res.send({
+    user
+  });
 });
 
 // @route   GET api/auth/user

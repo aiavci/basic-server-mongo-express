@@ -3,18 +3,28 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const config = require('config');
 const jwt = require('jsonwebtoken');
+
+const NodeGeocoder = require('node-geocoder');
+
+const options = {
+  provider: 'openstreetmap'
+}
+
+const geocoder = NodeGeocoder(options);
+
 const auth = require('../../middleware/auth');
 
 const User = require('../../models/User');
+const Address = require('../../models/Address');
 
 // @route   POST api/users
 // @desc    Register new user
 // @access  Public
 router.post('/', (req, res) => {
-  const { name, email, password, permissions, projects } = req.body;
+  const { firstName, lastName, email, password, permissions, projects } = req.body;
 
   // Simple validation
-  if (!name || !email || !password) {
+  if (!firstName || !lastName || !email || !password) {
     return res.status(400).json({ msg: 'Please enter all fields' });
   }
 
@@ -24,11 +34,10 @@ router.post('/', (req, res) => {
       if (user) return res.status(400).json({ msg: 'User already exists' });
 
       const newUser = new User({
-        name,
+        first_name: firstName,
+        last_name: lastName,
         email,
-        password,
-        permissions,
-        projects
+        password
       });
 
       // Create salt & hash
@@ -48,7 +57,8 @@ router.post('/', (req, res) => {
                     token,
                     user: {
                       id: user.id,
-                      name: user.name,
+                      first_name: user.first_name,
+                      last_name: user.last_name,
                       email: user.email
                     }
                   });
@@ -63,31 +73,119 @@ router.post('/', (req, res) => {
 // @route   PUT api/users
 // @desc    Update new user
 // @access  Private
-router.put('/', auth, async (req, res) => {
-  const { password, password2, email } = req.body;
+router.put('/', auth, async (req, res, next) => {
+  const { password, password2, name, email } = req.body;
 
-  if (password !== password2) {
+  if (password2 && password !== password2) {
     return res.status(500).send('{errors: "Passwords don\'t match"}').end();
+  } else if (name == null) {
+    return res.status(500).send('{errors: "Please enter information to update"}').end();
   }
 
   if (email == null) {
     return res.status(500).send('{errors: "User email is invalid"}').end();
   }
 
+  let updatedData = {};
+
   try {
-    const user = await User.findOne({ email });
+    let user = await User.findOne({ email });
 
-    const salt = await bcrypt.genSalt(10);
+    if (password2) {
+      const salt = await bcrypt.genSalt(10);
 
-    const hash = await bcrypt.hash(password, salt);
+      const hash = await bcrypt.hash(password2, salt);
 
-    await User.updateOne({ email }, { password: hash });
+      updatedData.password2 = hash;
+    }
+
+    if (name) {
+      updatedData.name = name;
+    }
+
+    user = await User.updateOne({ email }, updatedData);
 
     return res.send(user);
   } catch (error) {
+    console.error(error);
+
     return res.status(500).send('{errors: "An error ocurred when saving user"}').end();
   }
 });
+
+router.post('/address', auth, async (req, res, next) => {
+  let userId = req.user.id;
+
+  let user = await User.findById(userId);
+
+  const {
+    addressLine1,
+    addressLine2,
+    city,
+    province,
+    postalCode,
+    country
+  } = req.body;
+
+  console.log('Check body', req.body)
+
+  let address = null;
+  if (user.address) {
+    // If user already has an address, update it
+    address = await Address.findById(user.address);
+    address.addressLine1 = addressLine1;
+    address.addressLine2 = addressLine2;
+    address.city = city;
+    address.province = province;
+    address.postalCode = postalCode;
+    address.country = country;
+  } else {
+    address = new Address({
+      addressLine1,
+      addressLine2,
+      city,
+      province,
+      postalCode,
+      country
+    });
+  }
+
+  let geoCodedData = null;
+  try {
+    let addressAsString = addressLine1;
+    
+    if (addressLine2) {
+      addressAsString += ' ' + addressLine2;
+    }
+
+    geoCodedData = await geocoder.geocode({
+      address: addressAsString,
+      city,
+      country: 'Canada',
+      postalcode: postalCode
+    });
+    geoCodedData = geoCodedData[0] || {};
+  } catch(err) {
+    console.error('An error occurred', err)
+  }
+
+  console.log('geoCodedData', geoCodedData)
+
+  address.latitude = geoCodedData.latitude;
+  address.longitude = geoCodedData.longitude;
+
+  console.log('address', address)
+
+  address = await address.save()
+
+  user.address = address.id;
+
+  await user.save()
+
+  res.send({
+    success: true
+  })
+})
 
 // @route GET api/users
 // @desc Gets all users
